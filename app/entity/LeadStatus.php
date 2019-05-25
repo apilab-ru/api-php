@@ -25,7 +25,7 @@ class LeadStatus extends Base
 	 * @SWG\Property(title="Ключ")
 	 * @var string
 	 */
-	public $key;
+	//public $key;
 
 	/**
 	 * @SWG\Property(format="int64")

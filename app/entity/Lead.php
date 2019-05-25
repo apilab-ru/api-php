@@ -39,7 +39,7 @@ class Lead extends Base
     public $name;
 
     /**
-     * @SWG\Property(title="Источник")
+     * @SWG\Property(title="Источники")
      * @var string
      */
     public $sources;

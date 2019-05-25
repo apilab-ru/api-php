@@ -13,7 +13,11 @@ class Leads extends Base
 
     public function getList(): ?array
     {
-        $data = $this->db->select("select * from leads order by date_create DESC");
+        $data = $this->db->select("SELECT l.*, GROUP_CONCAT(s.source_id) as sources
+			FROM `leads` as l 
+			left join leads_sources as s on s.lead_id = l.id 
+			group by l.id 
+			order by date_create DESC");
         if ($data) {
             $list = [];
             foreach ($data as $item) {
@@ -29,8 +33,22 @@ class Leads extends Base
 	{
 		$lead = (new Lead($data, true));
 		$leadId = $this->addObject('leads', $lead->serializeToBd());
+		if ($lead->sources) {
+			$this->setLeadSources($leadId, $lead->sources);
+		}
 		$this->logStatus($leadId, (int)$lead->status);
 		return $leadId;
+	}
+
+	private function setLeadSources(int $leadId, array $sources)
+	{
+		$this->db->query('delete from leads_sources where lead_id =?d', $leadId);
+		foreach ($sources as $source) {
+			$this->addObject('leads_sources', [
+				'lead_id' => $leadId,
+				'source_id' => (int)$source
+			]);
+		}
 	}
 
     public function update(array $data, $id)
@@ -40,6 +58,7 @@ class Leads extends Base
 
 		$oldLead = $this->getById($id);
         $this->updateObject('leads', $lead->serializeToBd(), $id);
+        $this->setLeadSources($id, $lead->sources);
         if ($oldLead->status != $lead->status) {
 			$this->logStatus($id, (int)$lead->status);
 		}
@@ -47,13 +66,19 @@ class Leads extends Base
     }
 
     public function getById(int $id):? Lead {
-    	$data = $this->selectRow('select * from leads where id=?d', $id);
+    	$data = $this->selectRow('SELECT l.*, GROUP_CONCAT(s.source_id) as sources
+			FROM `leads` as l 
+				left join leads_sources as s on s.lead_id = l.id 
+				where l.id =?d
+				group by l.id', $id);
     	return new Lead($data);
 	}
 
     public function delete($id)
     {
-        return $this->deleteObject('leads', $id);
+        $stat = $this->deleteObject('leads', $id);
+        $this->db->query('delete from leads_sources where lead_id =?d', $id);
+        return $stat;
     }
 
     public function getStatisticByDate(StatisticLeadFilter $filter)
@@ -84,9 +109,10 @@ class Leads extends Base
 				lta.status_id
 			from leads_to_status as lta
 				left join leads as l on l.id = lta.lead_id
+				left join leads_sources as s on s.lead_id = lta.lead_id
 			where DATE_FORMAT(lta.date_change, '%Y-%m-%d') >= ? && DATE_FORMAT(lta.date_change, '%Y-%m-%d') <= ?
-				{ && lta.status in (?a)}
-				{ && l.sources in (?a)}
+				{ && lta.status_id in (?a)}
+				{ && s.source_id in (?a)}
 			group by DATE_FORMAT(lta.date_change, '$format'), lta.status_id
 			order by lta.date_change",
 			$dateFromString,
@@ -188,13 +214,6 @@ class Leads extends Base
 		$leadStatus = new LeadStatus($form, true);
 		return $this->updateObject('lead_statuses', $leadStatus->serializeToBd(), $id);
 	}
-
-    private function findItem($new, $complete, $work, $cancel): array
-    {
-        return $new ? $new :
-            ($complete ? $complete :
-                ($work ? $work : $cancel));
-    }
 
     private function logStatus(int $leadId, int $statusId)
 	{
