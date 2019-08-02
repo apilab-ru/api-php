@@ -12,7 +12,14 @@ return array(
         'table' => 'crm-lang'
     ),
     'dev' => 0,
-    'defUser' => 1,
+    'defUser' => 0,
     'prefix' => '/',
-    'fullRest' => true
+    'fullRest' => true,
+	'delivery' => [
+		'period' => 300,
+		'count' => 100,
+		'set' => [
+			'token' => '7e3d728e9b993f9a8796908b90196e3b'
+		]
+	]
 );

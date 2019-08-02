@@ -11,13 +11,27 @@ use app\entity\request\StatisticLeadFilter;
 class Leads extends Base
 {
 
-    public function getList(): ?array
+    public function getList(array $filter = null): ?array
     {
         $data = $this->db->select("SELECT l.*, GROUP_CONCAT(s.source_id) as sources
 			FROM `leads` as l 
 			left join leads_sources as s on s.lead_id = l.id 
+			where 1=1 "
+			. ($filter['havePhone'] ? "&& l.phone is not null && l.phone != '' ": '')
+			. " 
+				{ && l.name like ? }
+				{ && l.status in (?a) }
+				{ && s.source_id in (?a) }
+				{ && l.date_change >= ? }
+				{ && l.date_change <= ? }
 			group by l.id 
-			order by date_create DESC");
+				order by date_create DESC",
+			$filter['name'] ? ("%" . $filter['name'] . "%")  : DBSIMPLE_SKIP,
+			$filter['status_list'] ? array_map(intval, $filter['status_list']) : DBSIMPLE_SKIP,
+			$filter['source_list'] ? array_map(intval, $filter['source_list']) : DBSIMPLE_SKIP,
+			$filter['from'] ? $this->dateToString($filter['from']) : DBSIMPLE_SKIP,
+			$filter['to'] ? $this->dateToString($filter['to']) : DBSIMPLE_SKIP
+		);
         if ($data) {
             $list = [];
             foreach ($data as $item) {
@@ -40,7 +54,7 @@ class Leads extends Base
 		return $leadId;
 	}
 
-	private function setLeadSources(int $leadId, array $sources)
+	private function setLeadSources(int $leadId, ?array $sources)
 	{
 		$this->db->query('delete from leads_sources where lead_id =?d', $leadId);
 		foreach ($sources as $source) {
@@ -222,6 +236,13 @@ class Leads extends Base
 			'status_id' => $statusId,
 			'user_id' => $_SESSION['user']['id']
 		]);
+	}
+
+	private function dateToString(array $date): string
+	{
+		$month = str_pad("".$date['month'], 2, "0", STR_PAD_LEFT);
+		$day = str_pad("".$date['day'], 2, "0", STR_PAD_LEFT);
+		return "{$date['year']}-{$month}-{$day}";
 	}
 
 }

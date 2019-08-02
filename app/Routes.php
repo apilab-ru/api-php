@@ -41,6 +41,20 @@ $routes->addSimple('/users/{id}', 'Users', 'deleteUser', HttpMethod::$DELETE,
 
 $routes->addSimple('/auth', 'Users', 'authUser', HttpMethod::$POST);
 
+$routes->addSimple('/delivery', 'Delivery', 'addDelivery', HttpMethod::$POST,
+	["admin", "manager"]);
+$routes->addSimple('/delivery', 'Delivery', 'getDeliveryList', HttpMethod::$GET,
+	["admin", "manager"]);
+$routes->addSimple('/delivery/{id}', 'Delivery', 'getDeliveryDetail', HttpMethod::$GET,
+	["admin", "manager"]);
+$routes->addSimple('/delivery/{id}', 'Delivery', 'updateDelivery', HttpMethod::$PATCH,
+	["admin", "manager"]);
+$routes->addSimple('/delivery/{id}/active', 'Delivery', 'updateDeliveryActive', HttpMethod::$PATCH,
+	["admin", "manager"]);
+
+$routes->addSimple('/delivery/cron/check', 'Delivery', 'checkDelivery', HttpMethod::$GET);
+$routes->addSimple('/delivery/cron/send', 'Delivery', 'sendDelivery', HttpMethod::$GET);
+
 $routes->addSimple('/students', 'Students', 'getStudents', HttpMethod::$GET,
     ["admin", "manager", "corporate" => [
         'corporate_manager' => 'userId'

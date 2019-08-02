@@ -2,6 +2,9 @@
 
 namespace app\entity;
 
+use app\controller\Logger;
+use app\model\log;
+
 class Base
 {
     protected $types = [];
@@ -54,6 +57,9 @@ class Base
                 case 'boolean':
                     return $this->stringToBoolean($value);
                     break;
+
+				case 'json':
+					return $this->stringFromJson($value);
 
                 case 'ids':
                     return $this->stringToIds($value);
@@ -194,6 +200,13 @@ class Base
         return $value ? true : false;
     }
 
+    private function stringFromJson($value)
+	{
+		if ($value) {
+			return json_decode($value, 1);
+		}
+	}
+
     protected function dateToString(?DateDto $date)
     {
         if (!$date) {
@@ -222,7 +235,8 @@ class Base
 
         $date = new DateDto([
             'year' => $dateTime->year,
-            'month' => $dateTime->month
+            'month' => $dateTime->month,
+			'day' => $dateTime->day
         ]);
 
         $time = new TimeDto([

@@ -92,6 +92,14 @@ class Groups extends Base
         ]);
     }
 
+    public function updateStudentGroups(array $groupList, int $studentId)
+	{
+		$this->db->query('delete from members where student_id = ?d', $studentId);
+		foreach ($groupList as $groupId) {
+			$this->addStudent($groupId, $studentId);
+		}
+	}
+
     public function getGroupsStudent($studentId): array
     {
         $data = $this->db->select("select g.*, 
