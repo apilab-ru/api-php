@@ -21,4 +21,4 @@ try {
     die("Нет такой страницы совсем");
 }
 
-(new app\App(include "config.php", include "app/Access.php"))->run($res, $_REQUEST);
+(new app\App(include "config.php"))->run($res, $_REQUEST);

@@ -11,15 +11,13 @@ class App
     static $my = null;
     static $param = null;
 
-    private $access;
     private $auth;
 
     private static $dev = 0;
 
-    public function __construct($param, $access)
+    public function __construct($param)
     {
         self::$param = $param;
-        $this->access = $access;
 
         self::$db = new model\DataBase($param['db']);
         self::$my = $this;
@@ -124,23 +122,6 @@ class App
                 return true;
             } else if ($roles[$type]) {
                 return $roles[$type];
-            } else {
-                return false;
-            }
-        }
-    }
-
-    public function checkAccessC($controller, $method)
-    {
-        $type = $this->auth->getTypeUser();
-
-        if (!isset($this->access[$controller]) || !isset($this->access[$controller][$method])) {
-            return true;
-        } else {
-            if (in_array($type, $this->access[$controller][$method])) {
-                return true;
-            } else if ($this->access[$controller][$method][$type]) {
-                return $this->access[$controller][$method][$type];
             } else {
                 return false;
             }
